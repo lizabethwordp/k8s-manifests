@@ -1,0 +1,8 @@
+namespace: prod
+serviceAccount:
+  name: prod-app-sa
+vault:
+  role: prod-app
+imagePullSecrets:
+  - name: proddockcred
+

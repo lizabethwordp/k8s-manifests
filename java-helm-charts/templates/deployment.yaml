@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "java-helm-charts.fullname" . }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "java-helm-charts.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "java-helm-charts.fullname" . }}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-init-first: "true"
+        vault.hashicorp.com/agent-configmap: "vault-agent-config"
+        vault.hashicorp.com/tls-skip-verify: "true"
+        vault.hashicorp.com/agent-extra-secret.vault-client-cert: "vault-client-cert"
+        vault.hashicorp.com/role: "{{ .Values.vault.role }}"
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+
+    spec:
+      serviceAccountName: {{ include "java-helm-charts.serviceAccountName" . }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      containers:
+        - name: {{ include "java-helm-charts.fullname" . }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          volumeMounts:
+            - name: logs-volume
+              mountPath: {{ .Values.pvc.mountPath }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - {{ .Values.args | quote }}
+      volumes:
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: {{ include "java-helm-charts.fullname" . }}-logs-pvc

@@ -1,0 +1,9 @@
+namespace: cert
+branchName: cert
+serviceAccount:
+  name: prod-app-sa
+vault:
+  role: prod-app
+imagePullSecrets:
+  - name: proddockcred
+

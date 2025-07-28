@@ -1,0 +1,92 @@
+# values.yaml
+replicaCount: 1
+
+tests:
+  enabled: false
+
+image:
+  repository: docker-registry.com/app
+  tag: 013140b.30
+  pullPolicy: IfNotPresent
+
+nameOverride: "app"
+fullnameOverride: "app"
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+
+vault:
+  address: https://vault.vault.svc.cluster.local:8200
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: 
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/ssl-protocols: TLSv1.2 TLSv1.3
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: app.test.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - app.test.com
+      secretName: ingress-tls-secret 
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+
+jarName: app.jar
+
+volumes: []
+volumeMounts: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+pvc:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: cstor-csi-disk
+  mountPath: /data/logs  # where to mount the PVC inside the container
+
+args:
+  - /bin/sh
+  - -c
+  - >
+    echo "Waiting for Vault secret...";
+    while [ ! -f /vault/secrets/config ]; do sleep 2; done;
+    cp /vault/secrets/config /apps/config/application.properties;
+    java -jar /apps/{{ .Values.jarName }} --spring.config.location=file:///apps/config/application.properties;

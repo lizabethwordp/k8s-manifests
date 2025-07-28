@@ -1,0 +1,17 @@
+{{- if and .Values.tests (hasKey .Values.tests "enabled") .Values.tests.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "java-helm-charts.fullname" . }}-test-connection"
+  labels:
+    {{- include "java-helm-charts.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "java-helm-charts.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
+{{- end }}

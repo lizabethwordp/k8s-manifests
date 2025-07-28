@@ -1,0 +1,8 @@
+namespace: dev
+serviceAccount:
+  name: dev-app-sa
+branchName: qa
+imagePullSecrets:
+  - name: testdockcred
+vault:
+  role: dev-app
